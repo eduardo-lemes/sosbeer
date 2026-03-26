@@ -4,10 +4,12 @@ import { createProduct } from "../actions";
 import { queryAll, type Category, type Subcategory, type Brand, type Unit } from "@/lib/db";
 
 export default async function NewProductPage() {
-  const categories = await queryAll<Category>("categories", { orderBy: [["name", "asc"]] });
-  const subcategories = await queryAll<Subcategory>("subcategories", { orderBy: [["name", "asc"]] });
-  const brands = await queryAll<Brand>("brands", { orderBy: [["name", "asc"]] });
-  const units = await queryAll<Unit>("units", { orderBy: [["name", "asc"]] });
+  const [categories, subcategories, brands, units] = await Promise.all([
+    queryAll<Category>("categories", { orderBy: [["name", "asc"]] }),
+    queryAll<Subcategory>("subcategories", { orderBy: [["name", "asc"]] }),
+    queryAll<Brand>("brands", { orderBy: [["name", "asc"]] }),
+    queryAll<Unit>("units", { orderBy: [["name", "asc"]] }),
+  ]);
 
   const categorySuggestions = categories.map((c) => c.name);
   const subcategorySuggestionsByCategory: Record<string, string[]> = {};

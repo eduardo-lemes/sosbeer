@@ -29,18 +29,6 @@ export default async function EditProductPage({
   const action = updateProduct.bind(null, product.id);
   const tab = sp.tab === "movements" ? "movements" : "details";
 
-  const categories = await queryAll<Category>("categories", { orderBy: [["name", "asc"]] });
-  const subcategories = await queryAll<Subcategory>("subcategories", { orderBy: [["name", "asc"]] });
-  const brands = await queryAll<Brand>("brands", { orderBy: [["name", "asc"]] });
-  const units = await queryAll<Unit>("units", { orderBy: [["name", "asc"]] });
-  const categorySuggestions = categories.map((c) => c.name);
-  const subcategorySuggestionsByCategory: Record<string, string[]> = {};
-  for (const c of categories) {
-    subcategorySuggestionsByCategory[c.name.trim().toLocaleLowerCase("pt-BR")] = subcategories
-      .filter((s) => s.categoryId === c.id)
-      .map((s) => s.name);
-  }
-
   const today = new Date();
   const defaultFrom = new Date(today);
   defaultFrom.setDate(defaultFrom.getDate() - 30);
@@ -49,8 +37,6 @@ export default async function EditProductPage({
   const to = parseDateEnd(sp.to) ?? endOfDayUTC(today);
   const type = normalizeMovementType(sp.type);
 
-  const currentStock = await getCurrentStock(product.id);
-
   let movementsQuery: [string, FirebaseFirestore.WhereFilterOp, unknown][] = [
     ["productId", "==", product.id],
     ["createdAt", ">=", from],
@@ -58,11 +44,27 @@ export default async function EditProductPage({
   ];
   if (type) movementsQuery.push(["type", "==", type]);
 
-  const movements = await queryAll<StockMovement>("stockMovements", {
-    where: movementsQuery,
-    orderBy: [["createdAt", "desc"]],
-    limit: 200,
-  });
+  // All independent queries in parallel
+  const [categories, subcategories, brands, units, currentStock, movements] = await Promise.all([
+    queryAll<Category>("categories", { orderBy: [["name", "asc"]] }),
+    queryAll<Subcategory>("subcategories", { orderBy: [["name", "asc"]] }),
+    queryAll<Brand>("brands", { orderBy: [["name", "asc"]] }),
+    queryAll<Unit>("units", { orderBy: [["name", "asc"]] }),
+    getCurrentStock(product.id),
+    queryAll<StockMovement>("stockMovements", {
+      where: movementsQuery,
+      orderBy: [["createdAt", "desc"]],
+      limit: 200,
+    }),
+  ]);
+
+  const categorySuggestions = categories.map((c) => c.name);
+  const subcategorySuggestionsByCategory: Record<string, string[]> = {};
+  for (const c of categories) {
+    subcategorySuggestionsByCategory[c.name.trim().toLocaleLowerCase("pt-BR")] = subcategories
+      .filter((s) => s.categoryId === c.id)
+      .map((s) => s.name);
+  }
 
   return (
     <div className="space-y-4">
