@@ -1,0 +1,20 @@
+import { NextResponse } from "next/server";
+import { z } from "zod";
+import { queryAll, upsertByName, type Supplier } from "@/lib/db";
+
+const schema = z.object({
+  name: z.string().trim().min(1).max(80),
+});
+
+export async function GET() {
+  const suppliers = await queryAll<Supplier>("suppliers", { orderBy: [["name", "asc"]] });
+  return NextResponse.json({ suppliers: suppliers.map((s) => s.name) });
+}
+
+export async function POST(req: Request) {
+  const parsed = schema.safeParse(await req.json().catch(() => null));
+  if (!parsed.success) return NextResponse.json({ message: "Nome inválido" }, { status: 400 });
+
+  const supplier = await upsertByName<Supplier>("suppliers", parsed.data.name);
+  return NextResponse.json({ name: supplier.name });
+}

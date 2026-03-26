@@ -1,0 +1,415 @@
+@import "tailwindcss";
+
+:root {
+  --bg: 0 0% 100%;
+  --surface: 0 0% 100%;
+  --muted: 240 5% 96%;
+  --border: 240 6% 90%;
+
+  --text: 240 10% 10%;
+  --text-muted: 240 4% 45%;
+
+  --primary: 221 83% 53%;
+  --primary-foreground: 0 0% 100%;
+  --accent: 268 83% 60%;
+
+  --success: 142 71% 45%;
+  --danger: 0 84% 60%;
+
+  --ring: 221 83% 53%;
+
+  --radius-lg: 14px;
+  --radius-md: 10px;
+  --radius-sm: 8px;
+
+  --sidebar-w: 260px;
+}
+
+@theme inline {
+  --color-background: hsl(var(--bg));
+  --color-foreground: hsl(var(--text));
+  --color-surface: hsl(var(--surface));
+  --color-muted: hsl(var(--muted));
+  --color-border: hsl(var(--border));
+  --color-muted-foreground: hsl(var(--text-muted));
+
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-accent: hsl(var(--accent));
+
+  --color-success: hsl(var(--success));
+  --color-danger: hsl(var(--danger));
+  --color-ring: hsl(var(--ring));
+
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+
+  --radius-lg: var(--radius-lg);
+  --radius-md: var(--radius-md);
+  --radius-sm: var(--radius-sm);
+}
+
+html[data-sidebar="collapsed"] {
+  --sidebar-w: 72px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: 240 10% 7%;
+    --surface: 240 10% 10%;
+    --muted: 240 8% 14%;
+    --border: 240 6% 22%;
+
+    --text: 0 0% 98%;
+    --text-muted: 240 5% 70%;
+
+    --primary: 221 83% 60%;
+    --primary-foreground: 240 10% 7%;
+    --accent: 268 83% 68%;
+
+    --success: 142 71% 50%;
+    --danger: 0 84% 65%;
+
+    --ring: 221 83% 60%;
+  }
+}
+
+@layer base {
+  body {
+    background: hsl(var(--bg));
+    color: hsl(var(--text));
+    font-family: var(--font-sans), system-ui, -apple-system, Segoe UI, Roboto, Arial,
+      "Noto Sans", "Liberation Sans", sans-serif;
+    font-size: 16px;
+  }
+
+  ::selection {
+    background: color-mix(in oklab, hsl(var(--primary)) 22%, transparent);
+  }
+}
+
+@layer components {
+  .app-grid {
+    @apply grid grid-cols-1;
+  }
+
+  @media (min-width: 1024px) {
+    .app-grid {
+      grid-template-columns: var(--sidebar-w) minmax(0, 1fr);
+    }
+  }
+
+  .app-shell {
+    @apply w-full bg-surface;
+    @apply border-t border-border;
+  }
+
+  @media (min-width: 1024px) {
+    .app-shell {
+      display: grid;
+      grid-template-columns: var(--sidebar-w) minmax(0, 1fr);
+      min-height: calc(100dvh - 64px);
+    }
+  }
+
+  .app-shell-sidebar {
+    @apply border-r border-border bg-surface;
+  }
+
+  .app-shell-sidebar-inner {
+    @apply sticky top-[64px] h-[calc(100dvh-64px)] overflow-auto px-3 py-4;
+  }
+
+  .app-shell-main {
+    @apply min-w-0 px-4 py-6 lg:px-8 lg:py-6;
+  }
+
+  .card {
+    @apply rounded-[var(--radius-lg)] border border-border bg-surface shadow-sm;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-[var(--radius-md)] px-5 py-2.5 text-[15px] font-medium transition;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-[var(--radius-md)] bg-gradient-to-r from-primary to-accent px-5 py-2.5 text-[15px] font-semibold text-primary-foreground shadow-sm shadow-primary/20 transition;
+    @apply hover:-translate-y-0.5 hover:shadow-md hover:shadow-primary/25 active:translate-y-0 active:shadow-sm;
+    @apply focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20;
+  }
+
+  .btn-primary-sm {
+    @apply px-4 py-2 text-[14px];
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-[var(--radius-md)] border border-border bg-surface px-5 py-2.5 text-[15px] font-medium transition;
+    @apply hover:-translate-y-0.5 hover:bg-muted active:translate-y-0;
+    @apply focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15;
+  }
+
+  .btn-ghost-sm {
+    @apply px-4 py-2 text-[14px];
+  }
+
+  .btn-inline {
+    @apply inline-flex items-center justify-center rounded-[var(--radius-md)] border border-border bg-surface px-3.5 py-2 text-[13px] font-semibold transition;
+    @apply hover:bg-muted focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15 disabled:opacity-60;
+  }
+
+  .tabs {
+    @apply inline-flex items-center gap-1 rounded-[var(--radius-lg)] border border-border bg-surface p-1 shadow-sm;
+  }
+
+  .tab {
+    @apply rounded-[var(--radius-md)] px-4 py-2.5 text-[15px] font-semibold text-muted-foreground transition;
+    @apply hover:bg-muted/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15;
+  }
+
+  .tab-active {
+    @apply bg-muted text-foreground shadow-sm;
+  }
+
+  dialog::backdrop {
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(2px);
+  }
+
+  dialog.modal {
+    @apply fixed left-1/2 top-1/2 w-[min(560px,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-[var(--radius-lg)] border border-border bg-surface shadow-xl;
+  }
+
+  .modal-header {
+    @apply flex items-start justify-between gap-3 border-b border-border bg-muted/30 px-5 py-4;
+  }
+
+  .modal-title {
+    @apply text-sm font-semibold;
+  }
+
+  .modal-subtitle {
+    @apply mt-1 text-xs text-muted-foreground;
+  }
+
+  .modal-body {
+    @apply space-y-3 px-5 py-4;
+  }
+
+  .modal-actions {
+    @apply flex justify-end gap-2 pt-1;
+  }
+
+  .btn-icon {
+    @apply inline-flex h-10 w-10 items-center justify-center rounded-[var(--radius-md)] border border-border bg-surface text-muted-foreground transition;
+    @apply hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15;
+  }
+
+  .btn-icon:disabled {
+    @apply opacity-60;
+  }
+
+  .btn-icon-sm {
+    @apply h-9 w-9;
+  }
+
+  .datepicker-popover {
+    @apply absolute left-0 top-[calc(100%+0.5rem)] z-50 w-72 rounded-[var(--radius-lg)] border border-border bg-surface p-3 shadow-xl;
+  }
+
+  .datepicker-header {
+    @apply flex items-center justify-between gap-2;
+  }
+
+  .datepicker-title {
+    @apply text-sm font-semibold capitalize text-foreground;
+  }
+
+  .datepicker-weekdays {
+    @apply mt-3 grid grid-cols-7 gap-1;
+  }
+
+  .datepicker-weekday {
+    @apply text-center text-xs font-semibold text-muted-foreground;
+  }
+
+  .datepicker-grid {
+    @apply mt-2 grid grid-cols-7 gap-1;
+  }
+
+  .datepicker-day {
+    @apply inline-flex h-9 items-center justify-center rounded-[var(--radius-md)] border border-transparent bg-transparent text-sm font-semibold text-foreground transition;
+    @apply hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15;
+  }
+
+  .datepicker-day-out {
+    @apply text-muted-foreground/60;
+  }
+
+  .datepicker-day-today {
+    @apply border-border bg-muted/30;
+  }
+
+  .datepicker-day-selected {
+    @apply border-primary/40 bg-primary/15 text-foreground;
+  }
+
+  .datepicker-actions {
+    @apply mt-3 flex items-center justify-between;
+  }
+
+  .clamp-2 {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+  }
+
+  .input {
+    @apply w-full rounded-[var(--radius-md)] border border-border bg-surface px-4 py-2.5 text-[15px] outline-none focus-visible:border-primary/60 focus-visible:ring-4 focus-visible:ring-primary/15;
+  }
+
+  .input-compact {
+    @apply w-full rounded-[var(--radius-md)] border border-border bg-surface px-3 py-2 text-[14px] outline-none focus-visible:border-primary/60 focus-visible:ring-4 focus-visible:ring-primary/15;
+  }
+
+  .select {
+    @apply w-full rounded-[var(--radius-md)] border border-border bg-surface px-4 py-2.5 pr-10 text-[15px] outline-none focus-visible:border-primary/60 focus-visible:ring-4 focus-visible:ring-primary/15;
+  }
+
+  .select-compact {
+    @apply w-full rounded-[var(--radius-md)] border border-border bg-surface px-3 py-2 pr-10 text-[14px] outline-none focus-visible:border-primary/60 focus-visible:ring-4 focus-visible:ring-primary/15;
+  }
+
+  .textarea {
+    @apply w-full min-h-24 resize-y rounded-[var(--radius-md)] border border-border bg-surface px-4 py-2.5 text-[15px] outline-none focus-visible:border-primary/60 focus-visible:ring-4 focus-visible:ring-primary/15;
+  }
+
+  .input:disabled,
+  .select:disabled,
+  .textarea:disabled {
+    @apply cursor-not-allowed bg-muted text-muted-foreground;
+  }
+
+  .table {
+    @apply w-full text-[15px];
+  }
+
+  .table thead {
+    @apply bg-muted/60 text-muted-foreground;
+  }
+
+  .table th {
+    @apply px-5 py-3.5 text-left font-medium;
+  }
+
+  .table td {
+    @apply px-5 py-3.5;
+  }
+
+  .table-compact th {
+    @apply px-4 py-3;
+  }
+
+  .table-compact td {
+    @apply px-4 py-3;
+  }
+
+  .sidenav {
+    @apply flex flex-col gap-1;
+  }
+
+  .sidenav-collapsed {
+    @apply items-center;
+  }
+
+  .sidenav-link {
+    @apply flex items-center justify-between rounded-[var(--radius-md)] px-4 py-3 text-[15px] font-semibold text-muted-foreground transition;
+    @apply hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15;
+  }
+
+  .sidenav-link-collapsed {
+    @apply w-12 justify-center px-0;
+  }
+
+  .sidenav-icon {
+    @apply inline-flex h-9 w-9 items-center justify-center rounded-[var(--radius-md)] border border-border bg-surface text-sm font-bold text-foreground;
+  }
+
+  .sidenav-icon svg,
+  .sidenav-icon-inline svg {
+    @apply text-muted-foreground;
+  }
+
+  .sidenav-link-active .sidenav-icon svg,
+  .sidenav-link-active .sidenav-icon-inline svg {
+    @apply text-foreground;
+  }
+
+  .sidenav-icon-inline {
+    @apply inline-flex h-7 w-7 items-center justify-center rounded-[var(--radius-md)] border border-border bg-surface;
+  }
+
+  .sidenav-link-active {
+    @apply bg-muted text-foreground shadow-sm;
+  }
+
+  html[data-sidebar="collapsed"] .sidebar-hints {
+    display: none;
+  }
+
+  .toggle {
+    @apply inline-flex items-center gap-3 rounded-[var(--radius-md)] border border-border bg-surface px-4 py-2.5 text-[15px] font-semibold;
+    @apply hover:bg-muted/40;
+  }
+
+  .toggle-sm {
+    @apply px-3 py-2 text-[14px];
+  }
+
+  /* Caixa (PDV) - mais legibilidade */
+  .cash-screen .input,
+  .cash-screen .select,
+  .cash-screen .textarea {
+    @apply text-[18px] py-3.5;
+  }
+
+  .cash-screen .btn-primary,
+  .cash-screen .btn-ghost,
+  .cash-screen .btn-inline {
+    @apply text-[17px] py-3.5;
+  }
+
+  .cash-screen .table {
+    @apply text-[17px];
+  }
+
+  .cash-screen .table th,
+  .cash-screen .table td {
+    @apply py-4;
+  }
+
+  .cash-screen .mb-1 {
+    @apply text-base;
+  }
+
+  /* Pagamento maior que o resto */
+  .cash-payment .input,
+  .cash-payment .select,
+  .cash-payment .textarea {
+    @apply text-[19px] py-4;
+  }
+
+  .cash-payment .btn-primary,
+  .cash-payment .btn-ghost,
+  .cash-payment .btn-inline {
+    @apply text-[18px] py-4;
+  }
+
+  .toggle-track {
+    @apply relative inline-flex h-6 w-11 flex-none items-center rounded-full border border-border bg-muted transition;
+  }
+
+  .toggle-thumb {
+    @apply absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-surface shadow-sm transition;
+  }
+}
