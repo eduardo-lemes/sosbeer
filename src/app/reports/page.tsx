@@ -12,10 +12,11 @@ export default async function ReportsPage() {
   const since30 = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
   const today = startOfDay(now);
 
-  // Sales aggregations (manual)
-  const allSales30 = await queryAll<Sale>("sales", {
-    where: [["status", "==", "COMPLETED"], ["createdAt", ">=", since30]],
+  // Sales aggregations (manual) — fetch by status only, filter dates client-side
+  const allCompletedSales = await queryAll<Sale>("sales", {
+    where: [["status", "==", "COMPLETED"]],
   });
+  const allSales30 = allCompletedSales.filter((s) => s.createdAt >= since30);
 
   const salesToday = allSales30.filter((s) => s.createdAt >= today);
   const sales7 = allSales30.filter((s) => s.createdAt >= since7);

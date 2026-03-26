@@ -260,14 +260,48 @@ export async function queryAll<T>(
   },
 ): Promise<T[]> {
   let q: FirebaseFirestore.Query = db.collection(collection);
+  const hasWhere = (opts?.where ?? []).length > 0;
+  const orderSpecs = opts?.orderBy ?? [];
+
   for (const [field, op, val] of opts?.where ?? []) {
     const fieldRef = field === "__name__" ? FieldPath.documentId() : field;
     q = q.where(fieldRef, op, val);
   }
-  for (const [field, dir] of opts?.orderBy ?? []) q = q.orderBy(field, dir);
-  if (opts?.limit) q = q.limit(opts.limit);
+
+  // Only apply orderBy at Firestore level when there's no where clause,
+  // otherwise sort client-side to avoid composite index requirements.
+  if (!hasWhere) {
+    for (const [field, dir] of orderSpecs) q = q.orderBy(field, dir);
+    if (opts?.limit) q = q.limit(opts.limit);
+  }
+
   const snap = await q.get();
-  return snap.docs.map((d) => docToObj<T>(d.id, d.data()));
+  let results = snap.docs.map((d) => docToObj<T>(d.id, d.data()));
+
+  // Client-side sort when where was used
+  if (hasWhere && orderSpecs.length > 0) {
+    results.sort((a, b) => {
+      for (const [field, dir] of orderSpecs) {
+        const va = (a as Record<string, unknown>)[field];
+        const vb = (b as Record<string, unknown>)[field];
+        let cmp = 0;
+        if (va instanceof Date && vb instanceof Date) cmp = va.getTime() - vb.getTime();
+        else if (typeof va === "number" && typeof vb === "number") cmp = va - vb;
+        else if (typeof va === "string" && typeof vb === "string") cmp = va.localeCompare(vb, "pt-BR");
+        else if (va == null && vb != null) cmp = -1;
+        else if (va != null && vb == null) cmp = 1;
+        if (cmp !== 0) return dir === "desc" ? -cmp : cmp;
+      }
+      return 0;
+    });
+  }
+
+  // Client-side limit when where was used
+  if (hasWhere && opts?.limit && results.length > opts.limit) {
+    results = results.slice(0, opts.limit);
+  }
+
+  return results;
 }
 
 export async function createDoc<T>(
