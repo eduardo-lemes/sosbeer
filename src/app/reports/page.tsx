@@ -12,12 +12,20 @@ export default async function ReportsPage() {
   const since30 = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
   const today = startOfDay(now);
 
-  // Sales aggregations (manual) — fetch by status only, filter dates client-side
-  const allCompletedSales = await queryAll<Sale>("sales", {
-    where: [["status", "==", "COMPLETED"]],
-  });
-  const allSales30 = allCompletedSales.filter((s) => s.createdAt >= since30);
+  // Fetch all independent data in parallel
+  const [allCompletedSales, openPayables, productsMin, lastSessions] = await Promise.all([
+    queryAll<Sale>("sales", { where: [["status", "==", "COMPLETED"]] }),
+    queryAll<Payable>("payables", { where: [["status", "==", "OPEN"]] }),
+    queryAll<Product>("products", {
+      where: [["trackStock", "==", true], ["active", "==", true]],
+      orderBy: [["name", "asc"]],
+      limit: 1000,
+    }),
+    queryAll<CashSession>("cashSessions", { orderBy: [["openedAt", "desc"]], limit: 10 }),
+  ]);
 
+  // Sales aggregations (client-side date filtering)
+  const allSales30 = allCompletedSales.filter((s) => s.createdAt >= since30);
   const salesToday = allSales30.filter((s) => s.createdAt >= today);
   const sales7 = allSales30.filter((s) => s.createdAt >= since7);
 
@@ -29,14 +37,15 @@ export default async function ReportsPage() {
   // Payment breakdown for last 7 days
   const saleIds7 = sales7.map((s) => s.id);
   const paymentMap = new Map<string, number>();
+  const paymentChunks: Promise<SalePayment[]>[] = [];
   for (let i = 0; i < saleIds7.length; i += 30) {
     const chunk = saleIds7.slice(i, i + 30);
-    const payments = await queryAll<SalePayment>("salePayments", { where: [["saleId", "in", chunk]] });
-    for (const p of payments) paymentMap.set(p.method, (paymentMap.get(p.method) ?? 0) + p.amount);
+    paymentChunks.push(queryAll<SalePayment>("salePayments", { where: [["saleId", "in", chunk]] }));
   }
+  const allPayments = (await Promise.all(paymentChunks)).flat();
+  for (const p of allPayments) paymentMap.set(p.method, (paymentMap.get(p.method) ?? 0) + p.amount);
 
   // Payables
-  const openPayables = await queryAll<Payable>("payables", { where: [["status", "==", "OPEN"]] });
   const payablesCount = openPayables.length;
   const payablesTotal = openPayables.reduce((a, p) => a + p.amount, 0);
   const overdue = openPayables.filter((p) => p.dueDate < startOfDay(now));
@@ -44,22 +53,11 @@ export default async function ReportsPage() {
   const overdueTotal = overdue.reduce((a, p) => a + p.amount, 0);
 
   // Below min stock
-  const productsMin = await queryAll<Product>("products", {
-    where: [["trackStock", "==", true], ["active", "==", true]],
-    orderBy: [["name", "asc"]],
-    limit: 1000,
-  });
   const withMin = productsMin.filter((p) => p.stockMin != null);
   const stockMap = await getStockByProductIds(withMin.map((p) => p.id));
   const belowMin = withMin
     .map((p) => ({ p, stock: stockMap.get(p.id) ?? 0 }))
     .filter(({ p, stock }) => p.stockMin != null && stock < p.stockMin!);
-
-  // Last cash sessions
-  const lastSessions = await queryAll<CashSession>("cashSessions", {
-    orderBy: [["openedAt", "desc"]],
-    limit: 10,
-  });
 
   return (
     <div className="space-y-4">

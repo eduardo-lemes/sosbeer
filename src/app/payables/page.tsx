@@ -5,20 +5,11 @@ import { PayableForm } from "./PayableForm";
 import { DeletePayableButton } from "./DeletePayableButton";
 
 export default async function PayablesPage() {
-  let suppliers: Array<{ name: string }> = [];
-  try {
-    suppliers = await queryAll<Supplier>("suppliers", { orderBy: [["name", "asc"]] });
-  } catch { suppliers = []; }
-
-  let categories: Array<{ name: string }> = [];
-  try {
-    categories = await queryAll<PayableCategoryDoc>("payableCategories", { orderBy: [["name", "asc"]] });
-  } catch { categories = []; }
-
-  const payables = await queryAll<Payable>("payables", {
-    orderBy: [["dueDate", "asc"]],
-    limit: 200,
-  });
+  const [suppliers, categories, payables] = await Promise.all([
+    queryAll<Supplier>("suppliers", { orderBy: [["name", "asc"]] }).catch(() => [] as Supplier[]),
+    queryAll<PayableCategoryDoc>("payableCategories", { orderBy: [["name", "asc"]] }).catch(() => [] as PayableCategoryDoc[]),
+    queryAll<Payable>("payables", { orderBy: [["dueDate", "asc"]], limit: 200 }),
+  ]);
 
   const totalAll = payables.reduce((acc, p) => acc + p.amount, 0);
   const totalOpen = payables.reduce((acc, p) => acc + (p.status === "OPEN" ? p.amount : 0), 0);

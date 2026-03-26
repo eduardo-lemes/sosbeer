@@ -3,10 +3,12 @@ import { CreateBrandForm, CreateCategoryForm, CreateSubcategoryForm, CreateUnitF
 import { DeleteCatalogButton } from "./DeleteCatalogButtons";
 
 export default async function CatalogPage() {
-  const categories = await queryAll<Category>("categories", { orderBy: [["name", "asc"]] });
-  const subcategories = await queryAll<Subcategory>("subcategories", { orderBy: [["name", "asc"]] });
-  const brands = await queryAll<Brand>("brands", { orderBy: [["name", "asc"]] });
-  const units = await queryAll<Unit>("units", { orderBy: [["name", "asc"]] });
+  const [categories, subcategories, brands, units] = await Promise.all([
+    queryAll<Category>("categories", { orderBy: [["name", "asc"]] }),
+    queryAll<Subcategory>("subcategories", { orderBy: [["name", "asc"]] }),
+    queryAll<Brand>("brands", { orderBy: [["name", "asc"]] }),
+    queryAll<Unit>("units", { orderBy: [["name", "asc"]] }),
+  ]);
 
   // Group subcategories by category
   const categoriesWithSubs = categories.map((c) => ({
