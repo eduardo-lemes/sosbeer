@@ -13,7 +13,6 @@ export default async function ProductsPage({
   let products: (Product & { category?: Category | null; subcategory?: Subcategory | null; brand?: Brand | null })[];
 
   if (query) {
-    // Firestore doesn't support OR + contains, so we fetch all and filter client-side
     const all = await queryAll<Product>("products", { orderBy: [["updatedAt", "desc"]], limit: 500 });
     const lower = query.toLowerCase();
     products = all.filter(
@@ -26,7 +25,6 @@ export default async function ProductsPage({
     products = await queryAll<Product>("products", { orderBy: [["updatedAt", "desc"]], limit: 200 });
   }
 
-  // Hydrate category/brand/subcategory
   const categoryIds = [...new Set(products.map((p) => p.categoryId).filter(Boolean))] as string[];
   const brandIds = [...new Set(products.map((p) => p.brandId).filter(Boolean))] as string[];
   const subcategoryIds = [...new Set(products.map((p) => p.subcategoryId).filter(Boolean))] as string[];
@@ -51,30 +49,40 @@ export default async function ProductsPage({
   const stockByProductId = await getStockByProductIds(products.map((p) => p.id));
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight">Produtos</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Produtos</h1>
           <p className="mt-1 text-sm text-muted-foreground">Cadastre e edite produtos do catálogo.</p>
         </div>
-        <Link href="/products/new" className="btn-primary">
-          Novo produto
-        </Link>
+        <Link href="/products/new" className="btn-primary">Novo produto</Link>
       </div>
 
-      <form className="card p-4">
-        <div className="flex items-center gap-3">
-          <input
-            name="q"
-            defaultValue={query}
-            placeholder="Buscar por nome, código ou EAN…"
-            className="input"
-          />
-          <button className="btn-ghost">Buscar</button>
+      {/* ── Busca ── */}
+      <section className="card overflow-hidden">
+        <div className="border-b border-border bg-muted/30 px-5 py-3.5">
+          <h2 className="flex items-center gap-2 text-sm font-semibold">
+            <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-primary/15 text-xs text-primary">🔍</span>
+            Buscar
+          </h2>
         </div>
-      </form>
+        <form className="p-5">
+          <div className="flex items-center gap-3">
+            <input name="q" defaultValue={query} placeholder="Buscar por nome, código ou EAN…" className="input" />
+            <button className="btn-ghost">Buscar</button>
+          </div>
+        </form>
+      </section>
 
-      <div className="card overflow-hidden">
+      {/* ── Tabela ── */}
+      <section className="card overflow-hidden">
+        <div className="border-b border-border bg-muted/30 px-5 py-3.5">
+          <h2 className="flex items-center gap-2 text-sm font-semibold">
+            <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-accent/15 text-xs text-accent">📦</span>
+            Lista de produtos
+          </h2>
+          <p className="mt-0.5 text-xs text-muted-foreground">{enriched.length} produto(s) encontrado(s)</p>
+        </div>
         <table className="table">
           <thead>
             <tr>
@@ -91,11 +99,7 @@ export default async function ProductsPage({
           </thead>
           <tbody>
             {enriched.length === 0 ? (
-              <tr>
-                <td className="px-4 py-6 text-muted-foreground" colSpan={9}>
-                  Nenhum produto encontrado.
-                </td>
-              </tr>
+              <tr><td className="px-4 py-6 text-muted-foreground" colSpan={9}>Nenhum produto encontrado.</td></tr>
             ) : (
               enriched.map((p) => {
                 const stock = p.trackStock ? (stockByProductId.get(p.id) ?? 0) : null;
@@ -123,9 +127,7 @@ export default async function ProductsPage({
                     </td>
                     <td className={`hidden lg:table-cell whitespace-nowrap font-semibold ${statusTone}`}>{statusLabel}</td>
                     <td className="whitespace-nowrap text-right">
-                      <Link href={`/products/${p.id}`} className="text-sm text-primary hover:underline">
-                        Editar
-                      </Link>
+                      <Link href={`/products/${p.id}`} className="text-sm text-primary hover:underline">Editar</Link>
                     </td>
                   </tr>
                 );
@@ -133,7 +135,7 @@ export default async function ProductsPage({
             )}
           </tbody>
         </table>
-      </div>
+      </section>
     </div>
   );
 }

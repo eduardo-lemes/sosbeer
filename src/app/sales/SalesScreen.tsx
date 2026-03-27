@@ -55,55 +55,27 @@ export function SalesScreen({ initialSales }: { initialSales: SaleRow[] }) {
   }, [visible]);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight">Vendas</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Vendas</h1>
           <p className="mt-1 text-sm text-muted-foreground">Atalho: F3 para nova venda.</p>
         </div>
-        <Link href="/cash" className="btn-primary">
-          Nova venda — F3
-        </Link>
+        <Link href="/cash" className="btn-primary">Nova venda — F3</Link>
       </div>
 
+      {/* ── Tabs & filtros ── */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="tabs">
-          <button
-            type="button"
-            className={`tab ${tab === "history" ? "tab-active" : ""}`}
-            onClick={() => setTab("history")}
-          >
-            Histórico
-          </button>
-          <button
-            type="button"
-            className={`tab ${tab === "open" ? "tab-active" : ""}`}
-            onClick={() => setTab("open")}
-            disabled
-            title="Em breve"
-          >
-            Pedido em aberto
-          </button>
-          <button
-            type="button"
-            className={`tab ${tab === "quotes" ? "tab-active" : ""}`}
-            onClick={() => setTab("quotes")}
-            disabled
-            title="Em breve"
-          >
-            Orçamentos
-          </button>
+          <button type="button" className={`tab ${tab === "history" ? "tab-active" : ""}`} onClick={() => setTab("history")}>Histórico</button>
+          <button type="button" className={`tab ${tab === "open" ? "tab-active" : ""}`} onClick={() => setTab("open")} disabled title="Em breve">Pedido em aberto</button>
+          <button type="button" className={`tab ${tab === "quotes" ? "tab-active" : ""}`} onClick={() => setTab("quotes")} disabled title="Em breve">Orçamentos</button>
         </div>
 
         <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
           <label className="relative w-full sm:w-[320px]">
             <span className="sr-only">Buscar</span>
-            <input
-              className="input pr-10"
-              placeholder="Buscar por número, produto ou pagamento…"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
+            <input className="input pr-10" placeholder="Buscar por número, produto ou pagamento…" value={query} onChange={(e) => setQuery(e.target.value)} />
           </label>
 
           <div className="inline-flex items-center gap-2 text-sm text-muted-foreground">
@@ -116,20 +88,22 @@ export function SalesScreen({ initialSales }: { initialSales: SaleRow[] }) {
                 {hideTotal ? "••••••" : formatMoney(centsToDecimalString(totals.cents))}
               </span>
             </span>
-            <button
-              type="button"
-              className="btn-icon h-10 w-10"
-              onClick={() => setHideTotal((v) => !v)}
-              title={hideTotal ? "Mostrar total" : "Ocultar total"}
-              aria-label={hideTotal ? "Mostrar total" : "Ocultar total"}
-            >
-              {hideTotal ? "Mostrar" : "Ocultar"}
+            <button type="button" className="btn-icon h-10 w-10" onClick={() => setHideTotal((v) => !v)} title={hideTotal ? "Mostrar total" : "Ocultar total"} aria-label={hideTotal ? "Mostrar total" : "Ocultar total"}>
+              {hideTotal ? "👁️" : "🙈"}
             </button>
           </div>
         </div>
       </div>
 
-      <div className="card overflow-hidden">
+      {/* ── Tabela de vendas ── */}
+      <section className="card overflow-hidden">
+        <div className="border-b border-border bg-muted/30 px-5 py-3.5">
+          <h2 className="flex items-center gap-2 text-sm font-semibold">
+            <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-primary/15 text-xs text-primary">🧾</span>
+            Histórico de vendas
+          </h2>
+          <p className="mt-0.5 text-xs text-muted-foreground">{visible.length} venda(s)</p>
+        </div>
         <div className="overflow-x-auto">
           <table className="table">
             <thead>
@@ -147,11 +121,7 @@ export function SalesScreen({ initialSales }: { initialSales: SaleRow[] }) {
             </thead>
             <tbody>
               {visible.length === 0 ? (
-                <tr>
-                  <td className="px-4 py-6 text-muted-foreground" colSpan={9}>
-                    {query.trim() ? "Nenhuma venda encontrada." : "Sem vendas ainda."}
-                  </td>
-                </tr>
+                <tr><td className="px-4 py-6 text-muted-foreground" colSpan={9}>{query.trim() ? "Nenhuma venda encontrada." : "Sem vendas ainda."}</td></tr>
               ) : (
                 visible.map((s) => {
                   const createdAt = new Date(s.createdAtIso);
@@ -162,9 +132,7 @@ export function SalesScreen({ initialSales }: { initialSales: SaleRow[] }) {
                     <tr key={s.id} className="border-t border-border">
                       <td className="whitespace-nowrap">
                         <div className="flex items-center gap-2">
-                          <Link href={`/sales/${s.id}`} className="btn-inline">
-                            Abrir
-                          </Link>
+                          <Link href={`/sales/${s.id}`} className="btn-inline">Abrir</Link>
                           {isCanceled ? (
                             <span className="text-xs text-danger">Cancelada</span>
                           ) : (
@@ -181,12 +149,7 @@ export function SalesScreen({ initialSales }: { initialSales: SaleRow[] }) {
                               <span className="text-xs text-muted-foreground">-</span>
                             ) : (
                               s.payments.slice(0, 2).map((p, idx) => (
-                                <span
-                                  key={`${p.method}-${idx}`}
-                                  className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${paymentPillClass(
-                                    p.method,
-                                  )}`}
-                                >
+                                <span key={`${p.method}-${idx}`} className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${paymentPillClass(p.method)}`}>
                                   {paymentLabel(p.method)}
                                 </span>
                               ))
@@ -196,23 +159,15 @@ export function SalesScreen({ initialSales }: { initialSales: SaleRow[] }) {
                       </td>
                       <td className="text-muted-foreground">Venda</td>
                       <td className="text-muted-foreground">{createdAt.toLocaleDateString("pt-BR")}</td>
-                      <td className="text-muted-foreground">
-                        {createdAt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
-                      </td>
+                      <td className="text-muted-foreground">{createdAt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</td>
                       <td className="text-muted-foreground">Desktop</td>
                       <td className="text-muted-foreground">
-                        {s.items.length === 0 ? (
-                          "-"
-                        ) : (
+                        {s.items.length === 0 ? "-" : (
                           <div className="max-w-[520px] space-y-0.5">
                             {s.items.slice(0, 2).map((it) => (
-                              <div key={it.id} className="truncate">
-                                {formatQty(it.quantity)}x {it.name}
-                              </div>
+                              <div key={it.id} className="truncate">{formatQty(it.quantity)}x {it.name}</div>
                             ))}
-                            {s.items.length > 2 ? (
-                              <div className="text-xs text-muted-foreground">+{s.items.length - 2} item(ns)</div>
-                            ) : null}
+                            {s.items.length > 2 ? <div className="text-xs text-muted-foreground">+{s.items.length - 2} item(ns)</div> : null}
                           </div>
                         )}
                       </td>
@@ -224,7 +179,7 @@ export function SalesScreen({ initialSales }: { initialSales: SaleRow[] }) {
             </tbody>
           </table>
         </div>
-      </div>
+      </section>
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { queryAll, getById, type StockMovement, type Product } from "@/lib/db";
+import { queryAll, type StockMovement, type Product } from "@/lib/db";
 import { formatQty } from "@/lib/format";
 
 export default async function MovementsPage() {
@@ -8,7 +8,6 @@ export default async function MovementsPage() {
     limit: 200,
   });
 
-  // Hydrate product names
   const productIds = [...new Set(movements.map((m) => m.productId))];
   const products: Product[] = [];
   for (let i = 0; i < productIds.length; i += 30) {
@@ -19,13 +18,20 @@ export default async function MovementsPage() {
   const productMap = new Map(products.map((p) => [p.id, p]));
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-semibold tracking-tight">Movimentos</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Movimentos</h1>
         <p className="mt-1 text-sm text-muted-foreground">Últimas movimentações registradas.</p>
       </div>
 
-      <div className="card overflow-hidden">
+      <section className="card overflow-hidden">
+        <div className="border-b border-border bg-muted/30 px-5 py-3.5">
+          <h2 className="flex items-center gap-2 text-sm font-semibold">
+            <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-primary/15 text-xs text-primary">↔️</span>
+            Histórico de movimentações
+          </h2>
+          <p className="mt-0.5 text-xs text-muted-foreground">{movements.length} movimento(s)</p>
+        </div>
         <table className="table">
           <thead>
             <tr>
@@ -38,42 +44,38 @@ export default async function MovementsPage() {
           </thead>
           <tbody>
             {movements.length === 0 ? (
-              <tr>
-                <td className="px-4 py-6 text-muted-foreground" colSpan={5}>
-                  Sem movimentações ainda.
-                </td>
-              </tr>
+              <tr><td className="px-4 py-6 text-muted-foreground" colSpan={5}>Sem movimentações ainda.</td></tr>
             ) : (
               movements.map((m) => (
                 <tr key={m.id} className="border-t border-border">
                   <td className="text-muted-foreground">{m.createdAt.toLocaleString("pt-BR")}</td>
                   <td className="font-medium">{productMap.get(m.productId)?.name ?? "—"}</td>
                   <td>
-                    {m.type === "ENTRY" ? "Entrada" : m.type === "EXIT" ? "Saída" : "Ajuste"}
+                    <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${
+                      m.type === "ENTRY" ? "border-success/30 bg-success/10 text-success" :
+                      m.type === "EXIT" ? "border-danger/30 bg-danger/10 text-danger" :
+                      "border-accent/30 bg-accent/10 text-accent"
+                    }`}>
+                      {m.type === "ENTRY" ? "Entrada" : m.type === "EXIT" ? "Saída" : "Ajuste"}
+                    </span>
                   </td>
-                  <td className={m.delta < 0 ? "text-danger" : "text-success"}>
+                  <td className={m.delta < 0 ? "text-danger font-semibold" : "text-success font-semibold"}>
                     {formatSignedQty(m.type, m.delta, m.quantity)}
                   </td>
                   <td className="text-right">
-                    <Link href={`/products/${m.productId}`} className="text-sm text-primary hover:underline">
-                      Ver produto
-                    </Link>
+                    <Link href={`/products/${m.productId}`} className="text-sm text-primary hover:underline">Ver produto</Link>
                   </td>
                 </tr>
               ))
             )}
           </tbody>
         </table>
-      </div>
+      </section>
     </div>
   );
 }
 
-function formatSignedQty(
-  type: "ENTRY" | "EXIT" | "ADJUSTMENT",
-  delta: number,
-  quantity: number,
-) {
+function formatSignedQty(type: "ENTRY" | "EXIT" | "ADJUSTMENT", delta: number, quantity: number) {
   if (type === "ADJUSTMENT") {
     const sign = delta < 0 ? "-" : "+";
     return `${sign}${formatQty(Math.abs(delta))}`;

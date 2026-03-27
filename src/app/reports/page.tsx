@@ -12,7 +12,6 @@ export default async function ReportsPage() {
   const since30 = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
   const today = startOfDay(now);
 
-  // Fetch all independent data in parallel
   const [allCompletedSales, openPayables, productsMin, lastSessions] = await Promise.all([
     queryAll<Sale>("sales", { where: [["status", "==", "COMPLETED"]] }),
     queryAll<Payable>("payables", { where: [["status", "==", "OPEN"]] }),
@@ -24,7 +23,6 @@ export default async function ReportsPage() {
     queryAll<CashSession>("cashSessions", { orderBy: [["openedAt", "desc"]], limit: 10 }),
   ]);
 
-  // Sales aggregations (client-side date filtering)
   const allSales30 = allCompletedSales.filter((s) => s.createdAt >= since30);
   const salesToday = allSales30.filter((s) => s.createdAt >= today);
   const sales7 = allSales30.filter((s) => s.createdAt >= since7);
@@ -34,7 +32,6 @@ export default async function ReportsPage() {
   const sales7Agg = sumSales(sales7);
   const sales30Agg = sumSales(allSales30);
 
-  // Payment breakdown for last 7 days
   const saleIds7 = sales7.map((s) => s.id);
   const paymentMap = new Map<string, number>();
   const paymentChunks: Promise<SalePayment[]>[] = [];
@@ -45,14 +42,12 @@ export default async function ReportsPage() {
   const allPayments = (await Promise.all(paymentChunks)).flat();
   for (const p of allPayments) paymentMap.set(p.method, (paymentMap.get(p.method) ?? 0) + p.amount);
 
-  // Payables
   const payablesCount = openPayables.length;
   const payablesTotal = openPayables.reduce((a, p) => a + p.amount, 0);
   const overdue = openPayables.filter((p) => p.dueDate < startOfDay(now));
   const overdueCount = overdue.length;
   const overdueTotal = overdue.reduce((a, p) => a + p.amount, 0);
 
-  // Below min stock
   const withMin = productsMin.filter((p) => p.stockMin != null);
   const stockMap = await getStockByProductIds(withMin.map((p) => p.id));
   const belowMin = withMin
@@ -60,10 +55,10 @@ export default async function ReportsPage() {
     .filter(({ p, stock }) => p.stockMin != null && stock < p.stockMin!);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight">Relatórios</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Relatórios</h1>
           <p className="mt-1 text-sm text-muted-foreground">Visão rápida do que está acontecendo no PDV.</p>
         </div>
         <div className="flex items-center gap-2">
@@ -72,41 +67,61 @@ export default async function ReportsPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        <div className="card p-5">
-          <div className="text-sm font-semibold">Vendas</div>
-          <div className="mt-4 grid gap-3">
+      {/* ── Resumo de vendas & pagamentos ── */}
+      <div className="grid gap-5 lg:grid-cols-3">
+        <section className="card overflow-hidden">
+          <div className="border-b border-border bg-muted/30 px-5 py-3.5">
+            <h2 className="flex items-center gap-2 text-sm font-semibold">
+              <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-primary/15 text-xs text-primary">📈</span>
+              Vendas
+            </h2>
+          </div>
+          <div className="grid gap-3 p-5">
             <Metric label="Hoje" value={`${salesTodayAgg.count} venda(s) • ${formatMoney(salesTodayAgg.total)}`} tone="neutral" />
             <Metric label="Últimos 7 dias" value={`${sales7Agg.count} venda(s) • ${formatMoney(sales7Agg.total)}`} tone="neutral" />
             <Metric label="Últimos 30 dias" value={`${sales30Agg.count} venda(s) • ${formatMoney(sales30Agg.total)}`} tone="neutral" />
           </div>
-        </div>
+        </section>
 
-        <div className="card p-5">
-          <div className="text-sm font-semibold">Pagamentos (7 dias)</div>
-          <div className="mt-4 grid gap-3">
+        <section className="card overflow-hidden">
+          <div className="border-b border-border bg-muted/30 px-5 py-3.5">
+            <h2 className="flex items-center gap-2 text-sm font-semibold">
+              <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-success/15 text-xs text-success">💳</span>
+              Pagamentos (7 dias)
+            </h2>
+          </div>
+          <div className="grid gap-3 p-5">
             <Metric label="Dinheiro" value={formatMoney(paymentMap.get("CASH") ?? 0)} tone="good" />
             <Metric label="Pix" value={formatMoney(paymentMap.get("PIX") ?? 0)} tone="info" />
             <Metric label="Débito" value={formatMoney(paymentMap.get("DEBIT") ?? 0)} tone="info" />
             <Metric label="Crédito" value={formatMoney(paymentMap.get("CREDIT") ?? 0)} tone="info" />
           </div>
-        </div>
+        </section>
 
-        <div className="card p-5">
-          <div className="text-sm font-semibold">Contas a pagar</div>
-          <div className="mt-4 grid gap-3">
+        <section className="card overflow-hidden">
+          <div className="border-b border-border bg-muted/30 px-5 py-3.5">
+            <h2 className="flex items-center gap-2 text-sm font-semibold">
+              <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-danger/15 text-xs text-danger">📋</span>
+              Contas a pagar
+            </h2>
+          </div>
+          <div className="grid gap-3 p-5">
             <Metric label="Em aberto" value={`${payablesCount} lançamento(s) • ${formatMoney(payablesTotal)}`} tone="neutral" />
             <Metric label="Atrasadas" value={`${overdueCount} lançamento(s) • ${formatMoney(overdueTotal)}`} tone={overdueCount > 0 ? "bad" : "neutral"} />
             <Link href="/payables" className="btn-ghost">Ver lançamentos</Link>
           </div>
-        </div>
+        </section>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <div className="card overflow-hidden">
-          <div className="border-b border-border bg-muted/30 px-5 py-4">
-            <div className="text-sm font-semibold">Estoque abaixo do mínimo</div>
-            <div className="mt-1 text-xs text-muted-foreground">{belowMin.length} produto(s)</div>
+      {/* ── Tabelas de detalhe ── */}
+      <div className="grid gap-5 lg:grid-cols-2">
+        <section className="card overflow-hidden">
+          <div className="border-b border-border bg-muted/30 px-5 py-3.5">
+            <h2 className="flex items-center gap-2 text-sm font-semibold">
+              <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-danger/15 text-xs text-danger">⚠️</span>
+              Estoque abaixo do mínimo
+            </h2>
+            <p className="mt-0.5 text-xs text-muted-foreground">{belowMin.length} produto(s)</p>
           </div>
           <table className="table">
             <thead><tr><th>Produto</th><th>Código</th><th>Saldo</th><th>Mín</th></tr></thead>
@@ -128,12 +143,15 @@ export default async function ReportsPage() {
           <div className="border-t border-border bg-muted/20 px-5 py-3 text-right">
             <Link href="/stock?belowMin=1" className="text-sm text-primary hover:underline">Ver no estoque</Link>
           </div>
-        </div>
+        </section>
 
-        <div className="card overflow-hidden">
-          <div className="border-b border-border bg-muted/30 px-5 py-4">
-            <div className="text-sm font-semibold">Últimos caixas</div>
-            <div className="mt-1 text-xs text-muted-foreground">Sessões recentes</div>
+        <section className="card overflow-hidden">
+          <div className="border-b border-border bg-muted/30 px-5 py-3.5">
+            <h2 className="flex items-center gap-2 text-sm font-semibold">
+              <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-primary/15 text-xs text-primary">💰</span>
+              Últimos caixas
+            </h2>
+            <p className="mt-0.5 text-xs text-muted-foreground">Sessões recentes</p>
           </div>
           <table className="table">
             <thead><tr><th>Abertura</th><th>Status</th><th>Dinheiro (abertura)</th><th>Dinheiro (fechamento)</th></tr></thead>
@@ -155,7 +173,7 @@ export default async function ReportsPage() {
           <div className="border-t border-border bg-muted/20 px-5 py-3 text-right">
             <Link href="/cash/session" className="text-sm text-primary hover:underline">Abrir/fechar caixa</Link>
           </div>
-        </div>
+        </section>
       </div>
     </div>
   );

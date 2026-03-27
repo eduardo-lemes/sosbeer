@@ -422,8 +422,8 @@ export function ProductForm({
       </section>
 
       {/* ── Section 3 · Classificação ── */}
-      <section className="card overflow-hidden">
-        <div className="border-b border-border bg-muted/30 px-5 py-3.5">
+      <section className="card">
+        <div className="border-b border-border bg-muted/30 px-5 py-3.5 rounded-t-[var(--radius-lg)]">
           <h2 className="flex items-center gap-2 text-sm font-semibold">
             <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-accent/15 text-xs text-accent">🏷️</span>
             Classificação

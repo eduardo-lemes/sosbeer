@@ -14,33 +14,36 @@ export default async function CashSessionPage() {
 
   if (!session) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-6">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h1 className="text-xl font-semibold tracking-tight">Caixa</h1>
+            <h1 className="text-2xl font-semibold tracking-tight">Caixa</h1>
             <p className="mt-1 text-sm text-muted-foreground">Abra o caixa para começar a vender.</p>
           </div>
-          <div className="flex items-center gap-2">
-            <Link href="/cash" className="btn-ghost">Voltar ao PDV</Link>
-          </div>
+          <Link href="/cash" className="btn-ghost">Voltar ao PDV</Link>
         </div>
 
-        <div className="card p-5">
-          <div className="text-sm font-semibold">Caixa fechado</div>
-          <div className="mt-1 text-sm text-muted-foreground">Informe o valor inicial (dinheiro) para abrir.</div>
-          <CashSessionPanel mode="open" />
-        </div>
+        <section className="card overflow-hidden">
+          <div className="border-b border-border bg-muted/30 px-5 py-3.5">
+            <h2 className="flex items-center gap-2 text-sm font-semibold">
+              <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-primary/15 text-xs text-primary">🔓</span>
+              Abrir caixa
+            </h2>
+            <p className="mt-0.5 text-xs text-muted-foreground">Informe o valor inicial (dinheiro) para abrir.</p>
+          </div>
+          <div className="p-5">
+            <CashSessionPanel mode="open" />
+          </div>
+        </section>
       </div>
     );
   }
 
-  // Get payment totals by method for this session
   const completedSales = await queryAll<Sale>("sales", {
     where: [["cashSessionId", "==", session.id], ["status", "==", "COMPLETED"]],
   });
   const saleIds = completedSales.map((s) => s.id);
 
-  // Sum payments by method
   const byMethod = new Map<string, number>();
   let salesTotal = 0;
   let salesCount = 0;
@@ -58,7 +61,6 @@ export default async function CashSessionPage() {
     }
   }
 
-  // Session movements
   const sessionMovements = await queryAll<CashSessionMovement>("cashSessionMovements", {
     where: [["cashSessionId", "==", session.id]],
   });
@@ -77,10 +79,10 @@ export default async function CashSessionPage() {
   const expectedCash = session.openingCash + cashSales + supplies - withdrawals;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight">Caixa</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Caixa</h1>
           <p className="mt-1 text-sm text-muted-foreground">Acompanhe e feche o caixa.</p>
         </div>
         <div className="flex items-center gap-2">
@@ -89,43 +91,59 @@ export default async function CashSessionPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[1.2fr_1fr]">
-        <div className="card p-5">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <div className="text-sm font-semibold">Caixa atual</div>
-              <div className="mt-1 text-sm text-muted-foreground">Aberto em {session.openedAt.toLocaleString("pt-BR")}.</div>
-              {session.openNote ? <div className="mt-2 text-sm text-muted-foreground">Obs.: {session.openNote}</div> : null}
+      <div className="grid gap-5 lg:grid-cols-[1.2fr_1fr]">
+        {/* ── Resumo da sessão ── */}
+        <section className="card overflow-hidden">
+          <div className="border-b border-border bg-muted/30 px-5 py-3.5">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="flex items-center gap-2 text-sm font-semibold">
+                <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-success/15 text-xs text-success">📊</span>
+                Caixa atual
+              </h2>
+              <div className="rounded-[var(--radius-lg)] border border-border bg-muted/20 px-4 py-2 text-right">
+                <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Dinheiro esperado</div>
+                <div className="text-lg font-semibold">{formatMoney(expectedCash)}</div>
+              </div>
             </div>
-            <div className="rounded-[var(--radius-lg)] border border-border bg-muted/20 px-4 py-3 text-right">
-              <div className="text-xs text-muted-foreground">Dinheiro esperado</div>
-              <div className="text-lg font-semibold">{formatMoney(expectedCash)}</div>
+          </div>
+          <div className="p-5">
+            <div className="text-sm text-muted-foreground">
+              Aberto em {session.openedAt.toLocaleString("pt-BR")}.
+              {session.openNote ? <span className="ml-2">Obs.: {session.openNote}</span> : null}
+            </div>
+
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <Metric label="Abertura (dinheiro)" value={formatMoney(session.openingCash)} tone="neutral" />
+              <Metric label="Vendas (total)" value={formatMoney(salesTotal)} tone="neutral" />
+              <Metric label="Dinheiro (vendas)" value={formatMoney(cashSales)} tone="good" />
+              <Metric label="Pix" value={formatMoney(pixSales)} tone="info" />
+              <Metric label="Débito" value={formatMoney(debitSales)} tone="info" />
+              <Metric label="Crédito" value={formatMoney(creditSales)} tone="info" />
+            </div>
+
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <Metric label="Suprimento" value={formatMoney(supplies)} tone="good" />
+              <Metric label="Sangria" value={formatMoney(withdrawals)} tone="bad" />
             </div>
           </div>
+        </section>
 
-          <div className="mt-5 grid gap-3 sm:grid-cols-2">
-            <Metric label="Abertura (dinheiro)" value={formatMoney(session.openingCash)} tone="neutral" />
-            <Metric label="Vendas (total)" value={formatMoney(salesTotal)} tone="neutral" />
-            <Metric label="Dinheiro (vendas)" value={formatMoney(cashSales)} tone="good" />
-            <Metric label="Pix" value={formatMoney(pixSales)} tone="info" />
-            <Metric label="Débito" value={formatMoney(debitSales)} tone="info" />
-            <Metric label="Crédito" value={formatMoney(creditSales)} tone="info" />
+        {/* ── Movimentações ── */}
+        <section className="card overflow-hidden">
+          <div className="border-b border-border bg-muted/30 px-5 py-3.5">
+            <h2 className="flex items-center gap-2 text-sm font-semibold">
+              <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-accent/15 text-xs text-accent">🔄</span>
+              Movimentações
+            </h2>
+            <p className="mt-0.5 text-xs text-muted-foreground">Suprimento/Sangria e fechamento.</p>
           </div>
-
-          <div className="mt-5 grid gap-3 sm:grid-cols-2">
-            <Metric label="Suprimento" value={formatMoney(supplies)} tone="good" />
-            <Metric label="Sangria" value={formatMoney(withdrawals)} tone="bad" />
+          <div className="p-5">
+            <CashSessionPanel mode="manage" expectedCash={expectedCash.toString()} />
+            <div className="mt-4 rounded-[var(--radius-lg)] border border-border bg-muted/10 px-4 py-3 text-xs text-muted-foreground">
+              Vendas: <span className="font-semibold text-foreground">{salesCount}</span> venda(s) nesta sessão.
+            </div>
           </div>
-        </div>
-
-        <div className="card p-5">
-          <div className="text-sm font-semibold">Movimentações</div>
-          <div className="mt-1 text-sm text-muted-foreground">Suprimento/Sangria e fechamento.</div>
-          <CashSessionPanel mode="manage" expectedCash={expectedCash.toString()} />
-          <div className="mt-4 text-xs text-muted-foreground">
-            Vendas: {salesCount} venda(s) nesta sessão.
-          </div>
-        </div>
+        </section>
       </div>
     </div>
   );

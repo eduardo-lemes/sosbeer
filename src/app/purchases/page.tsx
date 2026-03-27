@@ -10,10 +10,10 @@ export default async function PurchasesPage() {
   } catch { imports = []; }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight">Compras</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Compras</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Importe o XML da NF-e ou lance manualmente quando não tiver o arquivo.
           </p>
@@ -24,28 +24,34 @@ export default async function PurchasesPage() {
         </div>
       </div>
 
-      <div className="card p-5">
-        <div className="text-sm font-semibold">Nova importação</div>
-        <form action={createPurchaseImport} className="mt-4 flex flex-wrap items-end gap-3">
-          <label className="block">
-            <div className="mb-1 text-sm font-medium">XML da nota *</div>
-            <input
-              type="file"
-              name="xmlFile"
-              accept=".xml,text/xml,application/xml"
-              className="input w-[min(560px,calc(100vw-2rem))] cursor-pointer py-2"
-              required
-            />
-            <div className="mt-1 text-xs text-muted-foreground">Aceita arquivo `.xml` (até 6MB).</div>
-          </label>
-          <button className="btn-primary">Importar</button>
-        </form>
-      </div>
+      {/* ── Nova importação ── */}
+      <section className="card overflow-hidden">
+        <div className="border-b border-border bg-muted/30 px-5 py-3.5">
+          <h2 className="flex items-center gap-2 text-sm font-semibold">
+            <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-primary/15 text-xs text-primary">📥</span>
+            Nova importação
+          </h2>
+        </div>
+        <div className="p-5">
+          <form action={createPurchaseImport} className="flex flex-wrap items-end gap-3">
+            <label className="block">
+              <div className="mb-1 text-sm font-medium">XML da nota *</div>
+              <input type="file" name="xmlFile" accept=".xml,text/xml,application/xml" className="input w-[min(560px,calc(100vw-2rem))] cursor-pointer py-2" required />
+              <div className="mt-1 text-xs text-muted-foreground">Aceita arquivo `.xml` (até 6MB).</div>
+            </label>
+            <button className="btn-primary">Importar</button>
+          </form>
+        </div>
+      </section>
 
-      <div className="card overflow-hidden">
-        <div className="border-b border-border bg-muted/30 px-5 py-4">
-          <div className="text-sm font-semibold">Importações recentes</div>
-          <div className="mt-1 text-xs text-muted-foreground">Últimas {Math.min(50, imports.length)}</div>
+      {/* ── Importações recentes ── */}
+      <section className="card overflow-hidden">
+        <div className="border-b border-border bg-muted/30 px-5 py-3.5">
+          <h2 className="flex items-center gap-2 text-sm font-semibold">
+            <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-accent/15 text-xs text-accent">📦</span>
+            Importações recentes
+          </h2>
+          <p className="mt-0.5 text-xs text-muted-foreground">Últimas {Math.min(50, imports.length)}</p>
         </div>
         <table className="table">
           <thead>
@@ -61,9 +67,7 @@ export default async function PurchasesPage() {
           </thead>
           <tbody>
             {imports.length === 0 ? (
-              <tr>
-                <td className="px-5 py-8 text-muted-foreground" colSpan={7}>Nenhuma importação ainda.</td>
-              </tr>
+              <tr><td className="px-5 py-8 text-muted-foreground" colSpan={7}>Nenhuma importação ainda.</td></tr>
             ) : (
               imports.map((imp) => (
                 <tr key={imp.id} className="border-t border-border">
@@ -90,7 +94,7 @@ export default async function PurchasesPage() {
             )}
           </tbody>
         </table>
-      </div>
+      </section>
     </div>
   );
 }
