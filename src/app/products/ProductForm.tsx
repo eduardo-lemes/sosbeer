@@ -309,625 +309,288 @@ export function ProductForm({
   }
 
   return (
-    <form action={formAction} className="space-y-4">
+    <form action={formAction} className="space-y-6">
       {state.message ? (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <div className="rounded-[var(--radius-lg)] border border-danger/30 bg-danger/10 px-4 py-3 text-sm font-medium text-danger">
           {state.message}
         </div>
       ) : null}
 
-      <div className="grid gap-6 xl:grid-cols-[1fr_520px]">
-        <div className="grid grid-cols-12 gap-4">
-          <Field label="Nome *" className="col-span-12 lg:col-span-9">
-            <input name="name" defaultValue={initial?.name ?? ""} className="input" required autoFocus />
-          </Field>
+      {/* ── Section 1 · Identificação ── */}
+      <section className="card overflow-hidden">
+        <div className="border-b border-border bg-muted/30 px-5 py-3.5">
+          <h2 className="flex items-center gap-2 text-sm font-semibold">
+            <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-primary/15 text-xs text-primary">📦</span>
+            Identificação
+          </h2>
+        </div>
+        <div className="grid gap-5 p-5 lg:grid-cols-[1fr_280px]">
+          <div className="grid grid-cols-12 gap-4">
+            <Field label="Nome do produto *" className="col-span-12 lg:col-span-8">
+              <input name="name" defaultValue={initial?.name ?? ""} className="input" required autoFocus />
+            </Field>
+            <Field label="EAN/GTIN" className="col-span-12 lg:col-span-4">
+              <input name="eanGtin" defaultValue={initial?.eanGtin ?? ""} className="input" inputMode="numeric" autoComplete="off" />
+            </Field>
+            <Field label="Código interno" className="col-span-12 sm:col-span-6">
+              {autoGenerateInternalCode && !initial?.internalCode ? (
+                <div className="mb-2">
+                  <label className="toggle toggle-sm">
+                    <input type="checkbox" className="sr-only peer" checked={codeMode === "auto"} onChange={(e) => { const next = e.target.checked ? "auto" : "manual"; setCodeMode(next); if (next === "auto") setSuggestedCode(""); }} />
+                    <span className="toggle-track peer-checked:border-primary/40 peer-checked:bg-primary"><span className="toggle-thumb peer-checked:translate-x-5" /></span>
+                    <span>Automático</span>
+                  </label>
+                </div>
+              ) : null}
+              {codeMode === "auto" && !initial?.internalCode ? (
+                <div>
+                  <input value={suggestedCode ? suggestedCode : "Carregando…"} className="input" disabled />
+                  <div className="mt-1 text-xs text-muted-foreground">Próximo código disponível.</div>
+                </div>
+              ) : (
+                <input name="internalCode" value={internalCode} onChange={(e) => setInternalCode(e.target.value)} onBlur={(e) => { const raw = e.target.value.trim(); if (/^\d+$/.test(raw) && raw.length < 6) { setInternalCode(raw.padStart(6, "0")); } else { setInternalCode(raw); } }} className="input" placeholder="ex: 000220" autoComplete="off" inputMode="numeric" />
+              )}
+            </Field>
+          </div>
 
-          <Field label="EAN/GTIN" className="col-span-12 lg:col-span-3">
-            <input
-              name="eanGtin"
-              defaultValue={initial?.eanGtin ?? ""}
-              className="input"
-              inputMode="numeric"
-              autoComplete="off"
-            />
-          </Field>
-
-          <Field label="Código interno" className="col-span-12 sm:col-span-6 md:col-span-4">
-            {autoGenerateInternalCode && !initial?.internalCode ? (
-              <div className="mb-2">
-                <label className="toggle toggle-sm">
-                  <input
-                    type="checkbox"
-                    className="sr-only peer"
-                    checked={codeMode === "auto"}
-                    onChange={(e) => {
-                      const next = e.target.checked ? "auto" : "manual";
-                      setCodeMode(next);
-                      if (next === "auto") setSuggestedCode("");
-                    }}
-                  />
-                  <span className="toggle-track peer-checked:border-primary/40 peer-checked:bg-primary">
-                    <span className="toggle-thumb peer-checked:translate-x-5" />
-                  </span>
-                  <span>Automático</span>
-                </label>
-              </div>
-            ) : null}
-
-            {codeMode === "auto" && !initial?.internalCode ? (
-              <div>
-                <input value={suggestedCode ? suggestedCode : "Carregando…"} className="input" disabled />
-                <div className="mt-1 text-xs text-muted-foreground">Próximo código disponível.</div>
-              </div>
+          {/* Foto — coluna direita */}
+          <div className="flex flex-col items-center gap-3 rounded-[var(--radius-lg)] border-2 border-dashed border-border bg-muted/20 p-5 transition hover:border-primary/40 hover:bg-muted/30">
+            {imagePreview ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={imagePreview} alt="" className="h-36 w-36 rounded-[var(--radius-lg)] border border-border bg-muted object-cover" />
             ) : (
-              <input
-                name="internalCode"
-                value={internalCode}
-                onChange={(e) => setInternalCode(e.target.value)}
-                onBlur={(e) => {
-                  const raw = e.target.value.trim();
-                  if (/^\d+$/.test(raw) && raw.length < 6) {
-                    setInternalCode(raw.padStart(6, "0"));
-                  } else {
-                    setInternalCode(raw);
-                  }
-                }}
-                className="input"
-                placeholder="ex: 000220"
-                autoComplete="off"
-                inputMode="numeric"
-              />
+              <div className="grid h-28 w-28 place-items-center rounded-[var(--radius-lg)] bg-muted/60 text-4xl text-muted-foreground">📷</div>
             )}
-          </Field>
+            <label className="cursor-pointer rounded-[var(--radius-md)] border border-border bg-surface px-4 py-2 text-sm font-medium transition hover:bg-muted">
+              Escolher foto
+              <input type="file" name="image" accept="image/png,image/jpeg,image/webp" className="sr-only" onChange={(e) => { const f = e.currentTarget.files?.[0]; if (!f) return; setImagePreview(URL.createObjectURL(f)); }} />
+            </label>
+            <span className="text-xs text-muted-foreground">JPG/PNG/WebP • até 1,5 MB</span>
+          </div>
+        </div>
+      </section>
 
-          <div className="col-span-12 sm:col-span-6 md:col-span-2">
-            <MoneyInput
-              name="costPrice"
-              label="Preço custo"
-              defaultValue={initial?.costPrice ?? ""}
-              valueDigits={costDigits}
-              onDigitsChange={(d) => {
-                setCostFromDigits(d);
-              }}
-            />
+      {/* ── Section 2 · Preços ── */}
+      <section className="card overflow-hidden">
+        <div className="border-b border-border bg-muted/30 px-5 py-3.5">
+          <h2 className="flex items-center gap-2 text-sm font-semibold">
+            <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-success/15 text-xs text-success">💲</span>
+            Preços
+          </h2>
+        </div>
+        <div className="p-5">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+            <MoneyInput name="costPrice" label="Preço custo" defaultValue={initial?.costPrice ?? ""} valueDigits={costDigits} onDigitsChange={(d) => { setCostFromDigits(d); }} />
+            <Field label="Markup (%)">
+              <div className="relative">
+                <input value={markupTarget} onChange={(e) => { const next = e.target.value; setMarkupTarget(next); if (!next.trim()) { revertSaleIfNeeded("markup"); return; } startCalcIfNeeded("markup"); setMarginTarget(""); const cents = calcSaleCentsFromMarkup(costDigits, next); if (cents != null) setSaleFromCents(cents); }} className="input pr-9" inputMode="decimal" placeholder="ex: 50" autoComplete="off" disabled={!costDigits} />
+                <span className="pointer-events-none absolute inset-y-0 right-0 inline-flex items-center pr-3 text-sm text-muted-foreground">%</span>
+              </div>
+              {!markupTarget.trim() && priceSummary?.markup != null ? <div className="mt-1 text-xs text-muted-foreground">Atual: {round1(priceSummary.markup)}%</div> : null}
+            </Field>
+            <Field label="Margem (%)">
+              <div className="relative">
+                <input value={marginTarget} onChange={(e) => { const next = e.target.value; setMarginTarget(next); if (!next.trim()) { revertSaleIfNeeded("margin"); return; } startCalcIfNeeded("margin"); setMarkupTarget(""); const cents = calcSaleCentsFromMargin(costDigits, next); if (cents != null) setSaleFromCents(cents); }} className="input pr-9" inputMode="decimal" placeholder="ex: 40" autoComplete="off" disabled={!costDigits} />
+                <span className="pointer-events-none absolute inset-y-0 right-0 inline-flex items-center pr-3 text-sm text-muted-foreground">%</span>
+              </div>
+              {!marginTarget.trim() && priceSummary?.margin != null ? <div className="mt-1 text-xs text-muted-foreground">Atual: {round1(priceSummary.margin)}%</div> : null}
+            </Field>
+            <MoneyInput name="salePrice" label="Preço venda *" defaultValue={initial?.salePrice ?? ""} required valueDigits={saleDigits} onDigitsChange={(d) => { setSaleFromDigits(d); saleBeforeCalcRef.current = null; calcModeRef.current = null; if (markupTarget) setMarkupTarget(""); if (marginTarget) setMarginTarget(""); }} />
           </div>
 
-          <Field label="Markup (%)" className="col-span-12 sm:col-span-4 md:col-span-2">
-            <div className="relative">
-              <input
-                value={markupTarget}
-                onChange={(e) => {
-                  const next = e.target.value;
-                  setMarkupTarget(next);
-                  if (!next.trim()) {
-                    revertSaleIfNeeded("markup");
-                    return;
-                  }
-                  startCalcIfNeeded("markup");
-                  setMarginTarget("");
-                  const cents = calcSaleCentsFromMarkup(costDigits, next);
-                  if (cents != null) setSaleFromCents(cents);
-                }}
-                className="input pr-9"
-                inputMode="decimal"
-                placeholder="ex: 50"
-                autoComplete="off"
-                disabled={!costDigits}
-              />
-              <span className="pointer-events-none absolute inset-y-0 right-0 inline-flex items-center pr-3 text-sm text-muted-foreground">
-                %
-              </span>
+          {/* Resumo de preço inline */}
+          {priceSummary ? (
+            <div className="mt-5 rounded-[var(--radius-lg)] border border-border bg-muted/20 p-4">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Resumo</span>
+                {priceSummary.costValue == null ? <span className="text-xs text-muted-foreground">Informe o custo para ver markup e margem</span> : null}
+              </div>
+              <div className="mt-3 grid gap-3 sm:grid-cols-3 lg:grid-cols-5">
+                <Metric label="Venda" value={formatBRL(priceSummary.saleValue)} tone="neutral" />
+                <Metric label="Custo" value={formatBRL(priceSummary.costValue ?? 0)} tone="neutral" muted={!priceSummary.costValue} />
+                <Metric label="Lucro" value={formatBRL(priceSummary.profit)} tone={priceSummary.profit >= 0 ? "good" : "bad"} />
+                <Metric label="Markup" value={priceSummary.markup != null ? `${round1(priceSummary.markup)}%` : "—"} tone={priceSummary.markup != null && priceSummary.markup >= 0 ? "good" : "neutral"} muted={priceSummary.markup == null} />
+                <Metric label="Margem" value={priceSummary.margin != null ? `${round1(priceSummary.margin)}%` : "—"} tone={priceSummary.margin != null && priceSummary.margin >= 0 ? "good" : "neutral"} muted={priceSummary.margin == null} />
+              </div>
             </div>
-            {!markupTarget.trim() && priceSummary?.markup != null ? (
-              <div className="mt-1 text-xs text-muted-foreground">Atual: {round1(priceSummary.markup)}%</div>
-            ) : null}
-          </Field>
-
-          <Field label="Margem (%)" className="col-span-12 sm:col-span-4 md:col-span-2">
-            <div className="relative">
-              <input
-                value={marginTarget}
-                onChange={(e) => {
-                  const next = e.target.value;
-                  setMarginTarget(next);
-                  if (!next.trim()) {
-                    revertSaleIfNeeded("margin");
-                    return;
-                  }
-                  startCalcIfNeeded("margin");
-                  setMarkupTarget("");
-                  const cents = calcSaleCentsFromMargin(costDigits, next);
-                  if (cents != null) setSaleFromCents(cents);
-                }}
-                className="input pr-9"
-                inputMode="decimal"
-                placeholder="ex: 40"
-                autoComplete="off"
-                disabled={!costDigits}
-              />
-              <span className="pointer-events-none absolute inset-y-0 right-0 inline-flex items-center pr-3 text-sm text-muted-foreground">
-                %
-              </span>
+          ) : (
+            <div className="mt-5 rounded-[var(--radius-lg)] border border-dashed border-border p-4 text-center text-sm text-muted-foreground">
+              Informe o preço de venda para ver o resumo de preços.
             </div>
-            {!marginTarget.trim() && priceSummary?.margin != null ? (
-              <div className="mt-1 text-xs text-muted-foreground">Atual: {round1(priceSummary.margin)}%</div>
-            ) : null}
-          </Field>
+          )}
+        </div>
+      </section>
 
-          <div className="col-span-12 sm:col-span-4 md:col-span-2">
-            <MoneyInput
-              name="salePrice"
-              label="Preço venda *"
-              defaultValue={initial?.salePrice ?? ""}
-              required
-              valueDigits={saleDigits}
-              onDigitsChange={(d) => {
-                setSaleFromDigits(d);
-                saleBeforeCalcRef.current = null;
-                calcModeRef.current = null;
-                if (markupTarget) setMarkupTarget("");
-                if (marginTarget) setMarginTarget("");
-              }}
-            />
-          </div>
-
-          <Field label="Categoria" className="col-span-12 md:col-span-3">
+      {/* ── Section 3 · Classificação ── */}
+      <section className="card overflow-hidden">
+        <div className="border-b border-border bg-muted/30 px-5 py-3.5">
+          <h2 className="flex items-center gap-2 text-sm font-semibold">
+            <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-accent/15 text-xs text-accent">🏷️</span>
+            Classificação
+          </h2>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Personalize em{" "}
+            <a href="/catalog" className="text-primary hover:underline">Catálogos</a>.
+          </p>
+        </div>
+        <div className="grid gap-4 p-5 sm:grid-cols-2 xl:grid-cols-4">
+          <Field label="Categoria">
             <div className="flex gap-2">
               <input type="hidden" name="categoryName" value={categoryName} />
-              <CatalogPicker
-                value={categoryName}
-                onChange={(v) => {
-                  setCategoryName(v);
-                  if (!v.trim()) setSubcategoryName("");
-                }}
-                placeholder="Selecione uma categoria"
-                options={categories}
-              />
-              <button
-                type="button"
-                className="btn-inline shrink-0"
-                onClick={() => {
-                  setCatalogMessage("");
-                  setNewCategoryName(categoryName.trim());
-                  categoryDialogRef.current?.showModal();
-                }}
-              >
-                Criar
-              </button>
+              <CatalogPicker value={categoryName} onChange={(v) => { setCategoryName(v); if (!v.trim()) setSubcategoryName(""); }} placeholder="Selecione" options={categories} />
+              <button type="button" className="btn-inline shrink-0" onClick={() => { setCatalogMessage(""); setNewCategoryName(categoryName.trim()); categoryDialogRef.current?.showModal(); }}>+</button>
             </div>
           </Field>
-
-          <Field label="Subcategoria" className="col-span-12 md:col-span-3">
+          <Field label="Subcategoria">
             <div className="flex gap-2">
               <input type="hidden" name="subcategoryName" value={subcategoryName} />
-              <CatalogPicker
-                value={subcategoryName}
-                onChange={(v) => setSubcategoryName(v)}
-                placeholder={categoryName.trim() ? "Subcategoria" : "Selecione a categoria primeiro"}
-                options={subcategorySuggestions}
-                disabled={!categoryName.trim()}
-              />
-              <button
-                type="button"
-                className="btn-inline shrink-0"
-                disabled={!categoryName.trim()}
-                onClick={() => {
-                  setCatalogMessage("");
-                  setNewSubcategoryName(subcategoryName.trim());
-                  subcategoryDialogRef.current?.showModal();
-                }}
-              >
-                Criar
-              </button>
+              <CatalogPicker value={subcategoryName} onChange={(v) => setSubcategoryName(v)} placeholder={categoryName.trim() ? "Selecione" : "Categoria primeiro"} options={subcategorySuggestions} disabled={!categoryName.trim()} />
+              <button type="button" className="btn-inline shrink-0" disabled={!categoryName.trim()} onClick={() => { setCatalogMessage(""); setNewSubcategoryName(subcategoryName.trim()); subcategoryDialogRef.current?.showModal(); }}>+</button>
             </div>
-            {!categoryName.trim() ? (
-              <div className="mt-1 text-xs text-muted-foreground">Informe a categoria para habilitar.</div>
-            ) : null}
+            {!categoryName.trim() ? <div className="mt-1 text-xs text-muted-foreground">Informe a categoria para habilitar.</div> : null}
           </Field>
-
-          <Field label="Marca" className="col-span-12 md:col-span-3">
+          <Field label="Marca">
             <div className="flex gap-2">
               <input type="hidden" name="brandName" value={brandName} />
-              <CatalogPicker value={brandName} onChange={(v) => setBrandName(v)} placeholder="Selecione uma marca" options={brands} />
-              <button
-                type="button"
-                className="btn-inline shrink-0"
-                onClick={() => {
-                  setCatalogMessage("");
-                  setNewBrandName(brandName.trim());
-                  brandDialogRef.current?.showModal();
-                }}
-              >
-                Criar
-              </button>
+              <CatalogPicker value={brandName} onChange={(v) => setBrandName(v)} placeholder="Selecione" options={brands} />
+              <button type="button" className="btn-inline shrink-0" onClick={() => { setCatalogMessage(""); setNewBrandName(brandName.trim()); brandDialogRef.current?.showModal(); }}>+</button>
             </div>
           </Field>
-
-          <Field label="Unidade de medida" className="col-span-12 md:col-span-3">
+          <Field label="Unidade de medida">
             <div className="flex gap-2">
               <input type="hidden" name="unitName" value={unitName} />
-              <CatalogPicker value={unitName} onChange={(v) => setUnitName(v)} placeholder="Unidade" options={units} />
-              <button
-                type="button"
-                className="btn-inline shrink-0"
-                onClick={() => {
-                  setCatalogMessage("");
-                  setNewUnitName(unitName.trim());
-                  unitDialogRef.current?.showModal();
-                }}
-              >
-                Criar
-              </button>
-            </div>
-            <div className="mt-1 text-xs text-muted-foreground">
-              Dica: personalize em{" "}
-              <a href="/catalog" className="text-primary hover:underline">
-                Catálogos
-              </a>
-              .
+              <CatalogPicker value={unitName} onChange={(v) => setUnitName(v)} placeholder="Selecione" options={units} />
+              <button type="button" className="btn-inline shrink-0" onClick={() => { setCatalogMessage(""); setNewUnitName(unitName.trim()); unitDialogRef.current?.showModal(); }}>+</button>
             </div>
           </Field>
+        </div>
+      </section>
 
-          <Field label="Opções" className="col-span-12">
-            <div className="flex flex-wrap gap-3">
-              <label className="toggle">
-                <input
-                  type="checkbox"
-                  name="trackStock"
-                  className="sr-only peer"
-                  defaultChecked={initial?.trackStock ?? true}
-                  onChange={(e) => setTrackStock(e.target.checked)}
-                />
-                <span className="toggle-track peer-checked:border-primary/40 peer-checked:bg-primary">
-                  <span className="toggle-thumb peer-checked:translate-x-5" />
-                </span>
-                <span>Controlar estoque</span>
-              </label>
-              <label className="toggle">
-                <input type="checkbox" name="active" defaultChecked={initial?.active ?? true} className="sr-only peer" />
-                <span className="toggle-track peer-checked:border-primary/40 peer-checked:bg-primary">
-                  <span className="toggle-thumb peer-checked:translate-x-5" />
-                </span>
-                <span>Ativo</span>
-              </label>
-            </div>
-          </Field>
-
-          {trackStock && currentStock != null ? (
-            <Field label="Estoque atual" className="col-span-12 sm:col-span-2">
-              <input className="input" value={formatQty(currentStock)} disabled />
-            </Field>
-          ) : null}
+      {/* ── Section 4 · Estoque & Opções ── */}
+      <section className="card overflow-hidden">
+        <div className="border-b border-border bg-muted/30 px-5 py-3.5">
+          <h2 className="flex items-center gap-2 text-sm font-semibold">
+            <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-primary/15 text-xs text-primary">📊</span>
+            Estoque &amp; Opções
+          </h2>
+        </div>
+        <div className="space-y-5 p-5">
+          <div className="flex flex-wrap gap-4">
+            <label className="toggle">
+              <input type="checkbox" name="trackStock" className="sr-only peer" defaultChecked={initial?.trackStock ?? true} onChange={(e) => setTrackStock(e.target.checked)} />
+              <span className="toggle-track peer-checked:border-primary/40 peer-checked:bg-primary"><span className="toggle-thumb peer-checked:translate-x-5" /></span>
+              <span>Controlar estoque</span>
+            </label>
+            <label className="toggle">
+              <input type="checkbox" name="active" defaultChecked={initial?.active ?? true} className="sr-only peer" />
+              <span className="toggle-track peer-checked:border-primary/40 peer-checked:bg-primary"><span className="toggle-thumb peer-checked:translate-x-5" /></span>
+              <span>Ativo</span>
+            </label>
+          </div>
 
           {trackStock ? (
-            <>
-              <Field label="Novo estoque (ajuste)" className="col-span-12 sm:col-span-2">
-                <input
-                  name="stockAdjustTo"
-                  type="number"
-                  step="1"
-                  className="input"
-                  inputMode="numeric"
-                  placeholder="(opcional)"
-                  onInput={(e) => {
-                    const el = e.currentTarget;
-                    el.value = el.value.replace(/[.,].*$/, "");
-                  }}
-                />
+            <div className="grid grid-cols-12 gap-4 rounded-[var(--radius-lg)] border border-border bg-muted/10 p-4">
+              {currentStock != null ? (
+                <Field label="Estoque atual" className="col-span-6 sm:col-span-3 lg:col-span-2">
+                  <input className="input" value={formatQty(currentStock)} disabled />
+                </Field>
+              ) : null}
+              <Field label="Novo estoque (ajuste)" className="col-span-6 sm:col-span-3 lg:col-span-2">
+                <input name="stockAdjustTo" type="number" step="1" className="input" inputMode="numeric" placeholder="(opcional)" onInput={(e) => { const el = e.currentTarget; el.value = el.value.replace(/[.,].*$/, ""); }} />
               </Field>
-              <Field label="Obs. do ajuste" className="col-span-12 sm:col-span-4">
+              <Field label="Obs. do ajuste" className="col-span-12 sm:col-span-6 lg:col-span-4">
                 <input name="stockAdjustNote" className="input" placeholder="ex: contagem do dia" />
+              </Field>
+              <Field label="Mínimo" className="col-span-4 sm:col-span-3 lg:col-span-1">
+                <input name="stockMin" type="number" step="1" defaultValue={initial?.stockMin ?? ""} className="input" inputMode="numeric" onInput={(e) => { const el = e.currentTarget; el.value = el.value.replace(/[.,].*$/, ""); }} />
+              </Field>
+              <Field label="Máximo" className="col-span-4 sm:col-span-3 lg:col-span-1">
+                <input name="stockMax" type="number" step="1" defaultValue={initial?.stockMax ?? ""} className="input" inputMode="numeric" onInput={(e) => { const el = e.currentTarget; el.value = el.value.replace(/[.,].*$/, ""); }} />
+              </Field>
+              <Field label="Localização" className="col-span-12 sm:col-span-6 lg:col-span-2">
+                <input name="location" defaultValue={initial?.location ?? ""} className="input" />
               </Field>
               <div className="col-span-12 text-xs text-muted-foreground">
                 Se preencher o novo estoque, ao salvar será criado um movimento de <span className="font-medium">Ajuste</span> no histórico.
               </div>
-            </>
-          ) : null}
-
-          <Field label="Estoque mínimo" className="col-span-12 sm:col-span-2">
-            <input
-              name="stockMin"
-              type="number"
-              step="1"
-              defaultValue={initial?.stockMin ?? ""}
-              className="input"
-              disabled={!trackStock}
-              inputMode="numeric"
-              onInput={(e) => {
-                const el = e.currentTarget;
-                el.value = el.value.replace(/[.,].*$/, "");
-              }}
-            />
-          </Field>
-          <Field label="Estoque máximo" className="col-span-12 sm:col-span-2">
-            <input
-              name="stockMax"
-              type="number"
-              step="1"
-              defaultValue={initial?.stockMax ?? ""}
-              className="input"
-              disabled={!trackStock}
-              inputMode="numeric"
-              onInput={(e) => {
-                const el = e.currentTarget;
-                el.value = el.value.replace(/[.,].*$/, "");
-              }}
-            />
-          </Field>
-
-          <Field label="Localização" className="col-span-12 sm:col-span-6">
-            <input name="location" defaultValue={initial?.location ?? ""} className="input" disabled={!trackStock} />
-          </Field>
-
-          <Field label="Observações" className="col-span-12">
-            <textarea name="notes" defaultValue={initial?.notes ?? ""} className="textarea" />
-          </Field>
-
-          <div className="col-span-12 flex items-center gap-3">
-            <button type="submit" disabled={isPending} className="btn-primary disabled:opacity-60">
-              {submitLabel}
-            </button>
-            {isPending ? <span className="text-sm text-muted-foreground">Salvando…</span> : null}
-          </div>
-        </div>
-
-        <div className="space-y-4">
-          <div className="card p-4">
-            <div className="text-sm font-semibold">Foto</div>
-            <div className="mt-3 flex items-start gap-4">
-              {imagePreview ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={imagePreview}
-                  alt=""
-                  className="h-48 w-48 rounded-[var(--radius-lg)] border border-border bg-muted object-cover"
-                />
-              ) : (
-                <div className="grid h-48 w-48 place-items-center rounded-[var(--radius-lg)] border border-border bg-muted/60 text-3xl text-muted-foreground">
-                  📷
-                </div>
-              )}
-              <div className="min-w-0 flex-1 space-y-2">
-                <input
-                  type="file"
-                  name="image"
-                  accept="image/png,image/jpeg,image/webp"
-                  className="input"
-                  onChange={(e) => {
-                    const f = e.currentTarget.files?.[0];
-                    if (!f) return;
-                    setImagePreview(URL.createObjectURL(f));
-                  }}
-                />
-                <div className="text-xs text-muted-foreground">JPG/PNG/WebP • até 1,5MB</div>
-              </div>
-            </div>
-          </div>
-
-          {priceSummary ? (
-            <div className="card p-4">
-              <div className="flex items-center justify-between">
-                <div className="text-sm font-semibold">Resumo de preço</div>
-                <div className="text-xs text-muted-foreground">Valores automáticos</div>
-              </div>
-
-              <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                <Metric label="Venda" value={formatBRL(priceSummary.saleValue)} tone="neutral" />
-                <Metric label="Custo" value={formatBRL(priceSummary.costValue ?? 0)} tone="neutral" muted={!priceSummary.costValue} />
-                <Metric label="Lucro" value={formatBRL(priceSummary.profit)} tone={priceSummary.profit >= 0 ? "good" : "bad"} />
-                <Metric
-                  label="Markup"
-                  value={priceSummary.markup != null ? `${round1(priceSummary.markup)}%` : "—"}
-                  tone={priceSummary.markup != null && priceSummary.markup >= 0 ? "good" : "neutral"}
-                  muted={priceSummary.markup == null}
-                />
-                <Metric
-                  label="Margem"
-                  value={priceSummary.margin != null ? `${round1(priceSummary.margin)}%` : "—"}
-                  tone={priceSummary.margin != null && priceSummary.margin >= 0 ? "good" : "neutral"}
-                  muted={priceSummary.margin == null}
-                />
-              </div>
-
-              {priceSummary.costValue == null ? (
-                <div className="mt-3 text-xs text-muted-foreground">Informe o custo para ver markup e margem.</div>
-              ) : null}
             </div>
           ) : (
-            <div className="card p-4 text-sm text-muted-foreground">Informe o preço de venda para ver o resumo.</div>
+            <div className="rounded-[var(--radius-lg)] border border-dashed border-border p-4 text-center text-sm text-muted-foreground">
+              Ative &quot;Controlar estoque&quot; para gerenciar quantidades.
+            </div>
           )}
+
+          <Field label="Observações">
+            <textarea name="notes" defaultValue={initial?.notes ?? ""} className="textarea" rows={3} />
+          </Field>
         </div>
+      </section>
+
+      {/* ── Action bar ── */}
+      <div className="flex items-center justify-end gap-3 rounded-[var(--radius-lg)] border border-border bg-muted/20 px-5 py-4">
+        <a href="/products" className="btn-ghost">Cancelar</a>
+        <button type="submit" disabled={isPending} className="btn-primary px-8 disabled:opacity-60">
+          {isPending ? "Salvando…" : submitLabel}
+        </button>
       </div>
 
-      <dialog
-        ref={categoryDialogRef}
-        className="modal"
-        onClick={(e) => {
-          if (e.target === e.currentTarget) closeCategoryModal();
-        }}
-        onCancel={(e) => {
-          e.preventDefault();
-          closeCategoryModal();
-        }}
-      >
+      {/* ── Modals ── */}
+      <dialog ref={categoryDialogRef} className="modal" onClick={(e) => { if (e.target === e.currentTarget) closeCategoryModal(); }} onCancel={(e) => { e.preventDefault(); closeCategoryModal(); }}>
         <div className="modal-header">
-          <div>
-            <div className="modal-title">Nova categoria</div>
-            <div className="modal-subtitle">Ela vai aparecer nas sugestões imediatamente.</div>
-          </div>
-          <button type="button" className="btn-icon" onClick={closeCategoryModal} aria-label="Fechar">
-            ✕
-          </button>
+          <div><div className="modal-title">Nova categoria</div><div className="modal-subtitle">Ela vai aparecer nas sugestões imediatamente.</div></div>
+          <button type="button" className="btn-icon" onClick={closeCategoryModal} aria-label="Fechar">✕</button>
         </div>
         <div className="modal-body">
-          {catalogMessage ? (
-            <div className="rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger">
-              {catalogMessage}
-            </div>
-          ) : null}
-          <input
-            className="input"
-            value={newCategoryName}
-            onChange={(e) => setNewCategoryName(e.target.value)}
-            placeholder="ex: Bebidas"
-            autoFocus
-          />
+          {catalogMessage ? <div className="rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger">{catalogMessage}</div> : null}
+          <input className="input" value={newCategoryName} onChange={(e) => setNewCategoryName(e.target.value)} placeholder="ex: Bebidas" autoFocus />
           <div className="modal-actions">
-            <button
-              type="button"
-              className="btn-ghost"
-              onClick={closeCategoryModal}
-              disabled={isCatalogBusy}
-            >
-              Cancelar
-            </button>
-            <button type="button" className="btn-primary" onClick={quickCreateCategory} disabled={isCatalogBusy}>
-              Criar
-            </button>
+            <button type="button" className="btn-ghost" onClick={closeCategoryModal} disabled={isCatalogBusy}>Cancelar</button>
+            <button type="button" className="btn-primary" onClick={quickCreateCategory} disabled={isCatalogBusy}>Criar</button>
           </div>
         </div>
       </dialog>
 
-      <dialog
-        ref={subcategoryDialogRef}
-        className="modal"
-        onClick={(e) => {
-          if (e.target === e.currentTarget) closeSubcategoryModal();
-        }}
-        onCancel={(e) => {
-          e.preventDefault();
-          closeSubcategoryModal();
-        }}
-      >
+      <dialog ref={subcategoryDialogRef} className="modal" onClick={(e) => { if (e.target === e.currentTarget) closeSubcategoryModal(); }} onCancel={(e) => { e.preventDefault(); closeSubcategoryModal(); }}>
         <div className="modal-header">
-          <div>
-            <div className="modal-title">Nova subcategoria</div>
-            <div className="modal-subtitle">
-              Vinculada à categoria: <span className="font-medium">{categoryName || "—"}</span>
-            </div>
-          </div>
-          <button type="button" className="btn-icon" onClick={closeSubcategoryModal} aria-label="Fechar">
-            ✕
-          </button>
+          <div><div className="modal-title">Nova subcategoria</div><div className="modal-subtitle">Vinculada à categoria: <span className="font-medium">{categoryName || "—"}</span></div></div>
+          <button type="button" className="btn-icon" onClick={closeSubcategoryModal} aria-label="Fechar">✕</button>
         </div>
         <div className="modal-body">
-          {catalogMessage ? (
-            <div className="rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger">
-              {catalogMessage}
-            </div>
-          ) : null}
-          <input
-            className="input"
-            value={newSubcategoryName}
-            onChange={(e) => setNewSubcategoryName(e.target.value)}
-            placeholder="ex: Whisky"
-            autoFocus
-          />
+          {catalogMessage ? <div className="rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger">{catalogMessage}</div> : null}
+          <input className="input" value={newSubcategoryName} onChange={(e) => setNewSubcategoryName(e.target.value)} placeholder="ex: Whisky" autoFocus />
           <div className="modal-actions">
-            <button
-              type="button"
-              className="btn-ghost"
-              onClick={closeSubcategoryModal}
-              disabled={isCatalogBusy}
-            >
-              Cancelar
-            </button>
-            <button type="button" className="btn-primary" onClick={quickCreateSubcategory} disabled={isCatalogBusy}>
-              Criar
-            </button>
+            <button type="button" className="btn-ghost" onClick={closeSubcategoryModal} disabled={isCatalogBusy}>Cancelar</button>
+            <button type="button" className="btn-primary" onClick={quickCreateSubcategory} disabled={isCatalogBusy}>Criar</button>
           </div>
         </div>
       </dialog>
 
-      <dialog
-        ref={brandDialogRef}
-        className="modal"
-        onClick={(e) => {
-          if (e.target === e.currentTarget) closeBrandModal();
-        }}
-        onCancel={(e) => {
-          e.preventDefault();
-          closeBrandModal();
-        }}
-      >
+      <dialog ref={brandDialogRef} className="modal" onClick={(e) => { if (e.target === e.currentTarget) closeBrandModal(); }} onCancel={(e) => { e.preventDefault(); closeBrandModal(); }}>
         <div className="modal-header">
-          <div>
-            <div className="modal-title">Nova marca</div>
-            <div className="modal-subtitle">Ela vai aparecer nas sugestões imediatamente.</div>
-          </div>
-          <button type="button" className="btn-icon" onClick={closeBrandModal} aria-label="Fechar">
-            ✕
-          </button>
+          <div><div className="modal-title">Nova marca</div><div className="modal-subtitle">Ela vai aparecer nas sugestões imediatamente.</div></div>
+          <button type="button" className="btn-icon" onClick={closeBrandModal} aria-label="Fechar">✕</button>
         </div>
         <div className="modal-body">
-          {catalogMessage ? (
-            <div className="rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger">
-              {catalogMessage}
-            </div>
-          ) : null}
-          <input
-            className="input"
-            value={newBrandName}
-            onChange={(e) => setNewBrandName(e.target.value)}
-            placeholder="ex: Bacardi"
-            autoFocus
-          />
+          {catalogMessage ? <div className="rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger">{catalogMessage}</div> : null}
+          <input className="input" value={newBrandName} onChange={(e) => setNewBrandName(e.target.value)} placeholder="ex: Bacardi" autoFocus />
           <div className="modal-actions">
-            <button
-              type="button"
-              className="btn-ghost"
-              onClick={closeBrandModal}
-              disabled={isCatalogBusy}
-            >
-              Cancelar
-            </button>
-            <button type="button" className="btn-primary" onClick={quickCreateBrand} disabled={isCatalogBusy}>
-              Criar
-            </button>
+            <button type="button" className="btn-ghost" onClick={closeBrandModal} disabled={isCatalogBusy}>Cancelar</button>
+            <button type="button" className="btn-primary" onClick={quickCreateBrand} disabled={isCatalogBusy}>Criar</button>
           </div>
         </div>
       </dialog>
 
-      <dialog
-        ref={unitDialogRef}
-        className="modal"
-        onClick={(e) => {
-          if (e.target === e.currentTarget) closeUnitModal();
-        }}
-        onCancel={(e) => {
-          e.preventDefault();
-          closeUnitModal();
-        }}
-      >
+      <dialog ref={unitDialogRef} className="modal" onClick={(e) => { if (e.target === e.currentTarget) closeUnitModal(); }} onCancel={(e) => { e.preventDefault(); closeUnitModal(); }}>
         <div className="modal-header">
-          <div>
-            <div className="modal-title">Nova unidade</div>
-            <div className="modal-subtitle">Ela vai aparecer nas sugestões imediatamente.</div>
-          </div>
-          <button type="button" className="btn-icon" onClick={closeUnitModal} aria-label="Fechar">
-            ✕
-          </button>
+          <div><div className="modal-title">Nova unidade</div><div className="modal-subtitle">Ela vai aparecer nas sugestões imediatamente.</div></div>
+          <button type="button" className="btn-icon" onClick={closeUnitModal} aria-label="Fechar">✕</button>
         </div>
         <div className="modal-body">
-          {catalogMessage ? (
-            <div className="rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger">
-              {catalogMessage}
-            </div>
-          ) : null}
-          <input
-            className="input"
-            value={newUnitName}
-            onChange={(e) => setNewUnitName(e.target.value)}
-            placeholder="ex: Lata"
-            autoFocus
-          />
+          {catalogMessage ? <div className="rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger">{catalogMessage}</div> : null}
+          <input className="input" value={newUnitName} onChange={(e) => setNewUnitName(e.target.value)} placeholder="ex: Lata" autoFocus />
           <div className="modal-actions">
-            <button type="button" className="btn-ghost" onClick={closeUnitModal} disabled={isCatalogBusy}>
-              Cancelar
-            </button>
-            <button type="button" className="btn-primary" onClick={quickCreateUnit} disabled={isCatalogBusy}>
-              Criar
-            </button>
+            <button type="button" className="btn-ghost" onClick={closeUnitModal} disabled={isCatalogBusy}>Cancelar</button>
+            <button type="button" className="btn-primary" onClick={quickCreateUnit} disabled={isCatalogBusy}>Criar</button>
           </div>
         </div>
       </dialog>
